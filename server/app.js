@@ -172,6 +172,24 @@ const loginGetLimiter = rateLimit({
   legacyHeaders: false,
 });
 
+// Limiter para el explorador de archivos autenticado (previene enumeración masiva)
+const browseRateLimiter = rateLimit({
+  windowMs: 60 * 1000, // ventana de 1 minuto
+  max: 120, // máximo 120 peticiones por minuto por IP
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Demasiadas peticiones. Espera un momento.' },
+});
+
+// Limiter para la descarga de archivos (previene transferencias masivas descontroladas)
+const rawRateLimiter = rateLimit({
+  windowMs: 60 * 1000, // ventana de 1 minuto
+  max: 60, // máximo 60 archivos por minuto por IP
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: 'Demasiadas peticiones de archivos. Espera un momento.',
+});
+
 // ──────────────────────────────────────────────
 // Middleware de autenticación
 // ──────────────────────────────────────────────
@@ -304,15 +322,20 @@ app.get('/api/status', requireAuth, (req, res) => {
 // ──────────────────────────────────────────────
 
 // Página del explorador
-app.get('/browse', requireAuth, (req, res) => {
+app.get('/browse', browseRateLimiter, requireAuth, (req, res) => {
   res.sendFile(path.join(__dirname, '..', 'public', 'browse.html'));
 });
 
 // API: listado de directorio
-app.get('/api/browse', requireAuth, (req, res) => {
-  const rel = typeof req.query.path === 'string'
-    ? decodeURIComponent(req.query.path)
-    : '';
+app.get('/api/browse', browseRateLimiter, requireAuth, (req, res) => {
+  let rel;
+  try {
+    rel = typeof req.query.path === 'string'
+      ? decodeURIComponent(req.query.path)
+      : '';
+  } catch {
+    return res.status(400).json({ error: 'Ruta inválida.' });
+  }
   const abs = resolveDataPath(rel);
   if (!abs) {
     return res.status(400).json({ error: 'Ruta inválida.' });
@@ -369,10 +392,15 @@ app.get('/api/browse', requireAuth, (req, res) => {
 });
 
 // API: servir un archivo (inline o descarga)
-app.get('/raw', requireAuth, (req, res) => {
-  const rel = typeof req.query.path === 'string'
-    ? decodeURIComponent(req.query.path)
-    : '';
+app.get('/raw', rawRateLimiter, requireAuth, (req, res) => {
+  let rel;
+  try {
+    rel = typeof req.query.path === 'string'
+      ? decodeURIComponent(req.query.path)
+      : '';
+  } catch {
+    return res.status(400).send('Ruta inválida.');
+  }
   const abs = resolveDataPath(rel);
   if (!abs) {
     return res.status(400).send('Ruta inválida.');

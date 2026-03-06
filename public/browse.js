@@ -227,7 +227,10 @@ function loadDirectory(p) {
     })
     .catch(function (err) {
       elLoading.hidden = true;
-      elError.textContent = '❌ Error: ' + err.message;
+      var msg = err && err.message && err.message !== 'Failed to fetch'
+        ? err.message
+        : 'No se pudo conectar con el servidor. Verifica tu sesión y conexión de red.';
+      elError.textContent = '❌ Error: ' + msg;
       elError.hidden = false;
     });
 }
