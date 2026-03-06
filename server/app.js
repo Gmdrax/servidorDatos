@@ -39,17 +39,29 @@ if (!PASSWORD_HASH) {
 }
 
 // ──────────────────────────────────────────────
-// Plantilla de login (cargada una vez en memoria)
+// Plantillas HTML (cargadas una vez en memoria)
 // ──────────────────────────────────────────────
 const LOGIN_HTML_PATH = path.join(__dirname, '..', 'public', 'login.html');
 const LOGIN_HTML_TEMPLATE = fs.readFileSync(LOGIN_HTML_PATH, 'utf8');
 
-/** Inyecta el token CSRF en el formulario de login. */
-function renderLogin(csrfToken) {
-  return LOGIN_HTML_TEMPLATE.replace(
-    '</form>',
-    `  <input type="hidden" name="_csrf" value="${csrfToken}" />\n</form>`,
-  );
+const DASHBOARD_HTML_PATH = path.join(__dirname, 'dashboard.html');
+const DASHBOARD_HTML = fs.readFileSync(DASHBOARD_HTML_PATH, 'utf8');
+
+/**
+ * Inyecta el token CSRF y, opcionalmente, un mensaje de error en el login.
+ * @param {string} csrfToken
+ * @param {boolean} [showError]
+ */
+function renderLogin(csrfToken, showError) {
+  const errorBlock = showError
+    ? '<p class="login-error" role="alert">Contraseña incorrecta. Inténtalo de nuevo.</p>'
+    : '';
+  return LOGIN_HTML_TEMPLATE
+    .replace('{{ERROR_BLOCK}}', errorBlock)
+    .replace(
+      '</form>',
+      `  <input type="hidden" name="_csrf" value="${csrfToken}" />\n</form>`,
+    );
 }
 
 // ──────────────────────────────────────────────
@@ -170,14 +182,15 @@ function verifyCsrf(req, res, next) {
 // ──────────────────────────────────────────────
 app.get('/login', loginGetLimiter, (req, res) => {
   if (req.session && req.session.authenticated) {
-    return res.redirect('/files/');
+    return res.redirect('/dashboard');
   }
   // Generar o reutilizar token CSRF para esta sesión
   if (!req.session.csrfToken) {
     req.session.csrfToken = crypto.randomBytes(32).toString('hex');
   }
+  const showError = req.query.error === '1';
   res.setHeader('Content-Type', 'text/html; charset=utf-8');
-  res.send(renderLogin(req.session.csrfToken));
+  res.send(renderLogin(req.session.csrfToken, showError));
 });
 
 app.post('/login', loginPostLimiter, verifyCsrf, async (req, res) => {
@@ -198,7 +211,7 @@ app.post('/login', loginPostLimiter, verifyCsrf, async (req, res) => {
         }
         req.session.authenticated = true;
         req.session.loggedInAt = new Date().toISOString();
-        const returnTo = req.session.returnTo || '/files/';
+        const returnTo = req.session.returnTo || '/dashboard';
         delete req.session.returnTo;
         res.redirect(returnTo);
       });
@@ -208,7 +221,7 @@ app.post('/login', loginPostLimiter, verifyCsrf, async (req, res) => {
       // Retardo aleatorio para dificultar análisis de tiempos por parte de atacantes
       const delay = 300 + Math.floor(Math.random() * 300); // 300–600 ms
       setTimeout(() => {
-        res.status(401).redirect('/login');
+        res.status(401).redirect('/login?error=1');
       }, delay);
     }
   } catch (err) {
@@ -224,6 +237,32 @@ app.get('/logout', (req, res) => {
     }
     res.clearCookie('sd.sid');
     res.redirect('/login');
+  });
+});
+
+// ──────────────────────────────────────────────
+// Panel de control (dashboard)
+// ──────────────────────────────────────────────
+app.get('/dashboard', requireAuth, (req, res) => {
+  res.setHeader('Content-Type', 'text/html; charset=utf-8');
+  res.send(DASHBOARD_HTML);
+});
+
+// API: estado del servidor (usado por dashboard.js)
+app.get('/api/status', requireAuth, (req, res) => {
+  const uptimeSeconds = Math.floor(process.uptime());
+  const mem = process.memoryUsage();
+  res.json({
+    uptime: uptimeSeconds,
+    memory: {
+      rss: Math.round(mem.rss / 1024 / 1024),
+      heapUsed: Math.round(mem.heapUsed / 1024 / 1024),
+      heapTotal: Math.round(mem.heapTotal / 1024 / 1024),
+    },
+    session: {
+      loggedInAt: req.session.loggedInAt || null,
+    },
+    timestamp: new Date().toISOString(),
   });
 });
 
@@ -250,10 +289,10 @@ app.use(
   }),
 );
 
-// Redirigir la raíz al login (o a /files/ si ya autenticado)
+// Redirigir la raíz al dashboard (o al login si no autenticado)
 app.get('/', (req, res) => {
   if (req.session && req.session.authenticated) {
-    return res.redirect('/files/');
+    return res.redirect('/dashboard');
   }
   res.redirect('/login');
 });

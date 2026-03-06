@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="robots" content="noindex, nofollow" />
+  <title>Panel — Servidor Datos</title>
+  <link rel="stylesheet" href="/styles.css" />
+</head>
+<body class="dash-body">
+
+  <header class="dash-header">
+    <div class="dash-header__brand">
+      <span class="dash-header__icon">🗄️</span>
+      <span class="dash-header__title">Servidor Datos</span>
+    </div>
+    <nav class="dash-header__nav">
+      <span class="dash-badge" id="clock">--:--:--</span>
+      <a href="/logout" class="btn btn--outline">Cerrar sesión</a>
+    </nav>
+  </header>
+
+  <main class="dash-main">
+
+    <!-- ── Tarjetas de estado ── -->
+    <section class="dash-section">
+      <h2 class="dash-section__title">Resumen</h2>
+      <div class="dash-grid">
+
+        <a href="/files/" class="stat-card stat-card--accent">
+          <span class="stat-card__icon">📁</span>
+          <div class="stat-card__body">
+            <p class="stat-card__label">Explorador de archivos</p>
+            <p class="stat-card__value">Abrir File Browser</p>
+          </div>
+          <span class="stat-card__arrow">→</span>
+        </a>
+
+        <div class="stat-card">
+          <span class="stat-card__icon">🔐</span>
+          <div class="stat-card__body">
+            <p class="stat-card__label">Sesión iniciada</p>
+            <p class="stat-card__value" id="session-since">…</p>
+          </div>
+        </div>
+
+        <div class="stat-card">
+          <span class="stat-card__icon">🖥️</span>
+          <div class="stat-card__body">
+            <p class="stat-card__label">Servidor activo</p>
+            <p class="stat-card__value" id="server-uptime">…</p>
+          </div>
+        </div>
+
+        <div class="stat-card">
+          <span class="stat-card__icon">📊</span>
+          <div class="stat-card__body">
+            <p class="stat-card__label">Memoria (Node.js)</p>
+            <p class="stat-card__value" id="mem-used">…</p>
+            <div class="progress-bar" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100">
+              <div class="progress-bar__fill" id="mem-bar"></div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- ── Actividad de la sesión ── -->
+    <section class="dash-section">
+      <h2 class="dash-section__title">Actividad de sesión</h2>
+      <div class="activity-card">
+        <ul class="activity-list" aria-label="Registro de actividad">
+          <li class="activity-item">
+            <span class="activity-dot activity-dot--green" aria-hidden="true"></span>
+            <span>Sesión iniciada — <strong id="act-login-time">…</strong></span>
+          </li>
+          <li class="activity-item">
+            <span class="activity-dot activity-dot--blue" aria-hidden="true"></span>
+            <span>Conexión activa — <strong id="act-now">…</strong></span>
+          </li>
+          <li class="activity-item">
+            <span class="activity-dot activity-dot--muted" aria-hidden="true"></span>
+            <span>Sesión expira en <strong id="act-expires">24 h</strong></span>
+          </li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- ── Tabla de estado del servidor ── -->
+    <section class="dash-section">
+      <h2 class="dash-section__title">Estado del servidor</h2>
+      <div class="info-table">
+        <div class="info-row">
+          <span class="info-row__key">Estado</span>
+          <span class="info-row__val"><span class="status-dot status-dot--green" aria-hidden="true"></span>En línea</span>
+        </div>
+        <div class="info-row">
+          <span class="info-row__key">Tiempo activo</span>
+          <span class="info-row__val" id="info-uptime">…</span>
+        </div>
+        <div class="info-row">
+          <span class="info-row__key">Memoria RSS</span>
+          <span class="info-row__val" id="info-rss">…</span>
+        </div>
+        <div class="info-row">
+          <span class="info-row__key">Heap utilizado</span>
+          <span class="info-row__val" id="info-heap">…</span>
+        </div>
+        <div class="info-row">
+          <span class="info-row__key">Última actualización</span>
+          <span class="info-row__val" id="info-ts">…</span>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <footer class="dash-footer">
+    <span>Servidor Datos</span>
+    <span class="dash-footer__sep" aria-hidden="true">·</span>
+    <span>Acceso privado y seguro</span>
+  </footer>
+
+  <script src="/dashboard.js"></script>
+</body>
+</html>
