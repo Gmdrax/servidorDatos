@@ -17,6 +17,7 @@
   --text: #e2e4ef;
   --muted: #7a7f9a;
   --error: #e05252;
+  --success: #4caf50;
   --radius: 8px;
   --font: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
 }
@@ -113,5 +114,298 @@ button[type="submit"]:focus {
     border-radius: 0;
     border-left: none;
     border-right: none;
+  }
+}
+
+/* ── Mensaje de error en login ── */
+.login-error {
+  background: rgba(224, 82, 82, 0.12);
+  border: 1px solid var(--error);
+  color: var(--error);
+  border-radius: var(--radius);
+  padding: 0.55rem 0.8rem;
+  font-size: 0.88rem;
+  text-align: center;
+}
+
+/* ════════════════════════════════════════════
+   DASHBOARD
+   ════════════════════════════════════════════ */
+
+.dash-body {
+  display: block;
+  align-items: unset;
+  justify-content: unset;
+  background: var(--bg);
+}
+
+/* ── Header ── */
+.dash-header {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.75rem 1.5rem;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+}
+
+.dash-header__brand {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-weight: 700;
+  font-size: 1.05rem;
+  letter-spacing: 0.01em;
+}
+
+.dash-header__icon {
+  font-size: 1.3rem;
+}
+
+.dash-header__nav {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.dash-badge {
+  font-size: 0.85rem;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ── Button ── */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.4rem 0.9rem;
+  border-radius: var(--radius);
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  text-decoration: none;
+  transition: background 0.2s, border-color 0.2s, color 0.2s;
+}
+
+.btn--outline {
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--muted);
+}
+
+.btn--outline:hover,
+.btn--outline:focus {
+  border-color: var(--accent);
+  color: var(--accent);
+  outline: none;
+}
+
+/* ── Main layout ── */
+.dash-main {
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 2rem 1.5rem 3rem;
+  display: flex;
+  flex-direction: column;
+  gap: 2.5rem;
+}
+
+/* ── Section ── */
+.dash-section__title {
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--muted);
+  margin-bottom: 0.85rem;
+}
+
+/* ── Stats grid ── */
+.dash-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 1rem;
+}
+
+/* ── Stat card ── */
+.stat-card {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.85rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 1.1rem 1rem;
+  text-decoration: none;
+  color: var(--text);
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.stat-card:hover {
+  border-color: var(--accent);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+}
+
+.stat-card--accent {
+  border-color: rgba(79, 142, 247, 0.4);
+  background: rgba(79, 142, 247, 0.06);
+}
+
+.stat-card--accent:hover {
+  background: rgba(79, 142, 247, 0.12);
+}
+
+.stat-card__icon {
+  font-size: 1.5rem;
+  flex-shrink: 0;
+  line-height: 1;
+}
+
+.stat-card__body {
+  flex: 1;
+  min-width: 0;
+}
+
+.stat-card__label {
+  font-size: 0.78rem;
+  color: var(--muted);
+  margin-bottom: 0.3rem;
+}
+
+.stat-card__value {
+  font-size: 0.95rem;
+  font-weight: 600;
+  word-break: break-word;
+}
+
+.stat-card__arrow {
+  font-size: 1.1rem;
+  color: var(--accent);
+  flex-shrink: 0;
+  align-self: center;
+}
+
+/* ── Progress bar ── */
+.progress-bar {
+  height: 5px;
+  background: var(--border);
+  border-radius: 99px;
+  overflow: hidden;
+  margin-top: 0.5rem;
+}
+
+.progress-bar__fill {
+  height: 100%;
+  background: var(--accent);
+  border-radius: 99px;
+  transition: width 0.5s ease;
+}
+
+/* ── Activity card ── */
+.activity-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 1.2rem 1.25rem;
+}
+
+.activity-list {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+}
+
+.activity-item {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  font-size: 0.9rem;
+}
+
+.activity-dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.activity-dot--green  { background: var(--success); }
+.activity-dot--blue   { background: var(--accent); }
+.activity-dot--muted  { background: var(--muted); }
+
+/* ── Info table ── */
+.info-table {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+
+.info-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.65rem 1.1rem;
+  font-size: 0.88rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.info-row:last-child {
+  border-bottom: none;
+}
+
+.info-row__key {
+  color: var(--muted);
+}
+
+.info-row__val {
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.status-dot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+
+.status-dot--green { background: var(--success); }
+
+/* ── Footer ── */
+.dash-footer {
+  text-align: center;
+  font-size: 0.78rem;
+  color: var(--muted);
+  padding: 1.25rem;
+  border-top: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+}
+
+.dash-footer__sep {
+  opacity: 0.4;
+}
+
+/* ── Responsivo dashboard ── */
+@media (max-width: 600px) {
+  .dash-header {
+    padding: 0.65rem 1rem;
+  }
+
+  .dash-main {
+    padding: 1.25rem 1rem 2rem;
+  }
+
+  .dash-grid {
+    grid-template-columns: 1fr;
   }
 }
