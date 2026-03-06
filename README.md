@@ -38,7 +38,9 @@ cd servidor-datos
 npm install
 
 # 3. Instalar File Browser
-curl -fsSL https://raw.githubusercontent.com/filebrowser/get/master/get.sh | bash
+curl -fsSL https://raw.githubusercontent.com/filebrowser/get/master/get.sh -o /tmp/install-fb.sh
+# Revisa el script antes de ejecutarlo, luego:
+bash /tmp/install-fb.sh
 
 # 4. Copiar el fichero de configuración y editarlo
 cp .env.example .env

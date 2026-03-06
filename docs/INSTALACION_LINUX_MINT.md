@@ -64,7 +64,12 @@ File Browser es una interfaz web de gestión de archivos. Se distribuye como un 
 
 ```bash
 # Descargar e instalar el binario oficial
-curl -fsSL https://raw.githubusercontent.com/filebrowser/get/master/get.sh | bash
+# Primero descarga el script para revisarlo, luego ejecútalo
+curl -fsSL https://raw.githubusercontent.com/filebrowser/get/master/get.sh -o /tmp/install-fb.sh
+# Revisa el contenido del script antes de ejecutarlo:
+less /tmp/install-fb.sh
+# Cuando estés seguro, ejecútalo:
+bash /tmp/install-fb.sh
 
 # El binario se instala en /usr/local/bin/filebrowser
 filebrowser version

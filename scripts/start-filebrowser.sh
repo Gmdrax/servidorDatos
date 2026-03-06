@@ -35,7 +35,10 @@ FB_BIN="${FB_BIN:-$(command -v filebrowser 2>/dev/null || echo '/usr/local/bin/f
 
 if [[ ! -x "$FB_BIN" ]]; then
   echo "[ERROR] File Browser no encontrado o no es ejecutable en: $FB_BIN"
-  echo "        Instálalo con: curl -fsSL https://raw.githubusercontent.com/filebrowser/get/master/get.sh | bash"
+  echo "        Para instalarlo, descarga el script de instalación oficial y revísalo antes de ejecutarlo:"
+  echo "          curl -fsSL https://raw.githubusercontent.com/filebrowser/get/master/get.sh -o /tmp/install-fb.sh"
+  echo "          less /tmp/install-fb.sh   # revisar el contenido"
+  echo "          bash /tmp/install-fb.sh   # ejecutar"
   echo "        O verifica los permisos con: chmod +x $FB_BIN"
   exit 1
 fi

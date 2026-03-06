@@ -68,9 +68,10 @@ async function main() {
   }
 
   if (password.length < 12) {
-    console.warn(
-      '\n[AVISO] La contraseña tiene menos de 12 caracteres. Se recomienda una contraseña de al menos 12 caracteres.',
+    console.error(
+      '\n[ERROR] La contraseña debe tener al menos 12 caracteres.',
     );
+    process.exit(1);
   }
 
   console.log('\nGenerando hash (puede tardar unos segundos)...');

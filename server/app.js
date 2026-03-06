@@ -205,10 +205,11 @@ app.post('/login', loginPostLimiter, verifyCsrf, async (req, res) => {
     } else {
       // Invalidar el token CSRF tras un intento fallido (fuerza recarga del token)
       delete req.session.csrfToken;
-      // Respuesta con retardo leve para dificultar enumeración de tiempos
+      // Retardo aleatorio para dificultar análisis de tiempos por parte de atacantes
+      const delay = 300 + Math.floor(Math.random() * 300); // 300–600 ms
       setTimeout(() => {
         res.status(401).redirect('/login');
-      }, 400);
+      }, delay);
     }
   } catch (err) {
     console.error('[ERROR] Error al verificar contraseña:', err);
