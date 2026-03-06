@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="robots" content="noindex, nofollow" />
+  <title>Archivos — Servidor Datos</title>
+  <link rel="stylesheet" href="/styles.css" />
+</head>
+<body class="dash-body">
+
+  <header class="dash-header">
+    <div class="dash-header__brand">
+      <a href="/dashboard" class="dash-header__brand-link" aria-label="Volver al panel">
+        <span class="dash-header__icon">🗄️</span>
+        <span class="dash-header__title">Servidor Datos</span>
+      </a>
+    </div>
+    <nav class="dash-header__nav">
+      <button id="btn-view-toggle" class="btn btn--outline" aria-pressed="false" title="Cambiar vista">
+        <span id="btn-view-icon">🖼️</span>
+        <span id="btn-view-label">Solo fotos</span>
+      </button>
+      <a href="/logout" class="btn btn--outline">Cerrar sesión</a>
+    </nav>
+  </header>
+
+  <!-- Migas de pan -->
+  <nav class="breadcrumb" aria-label="Ruta actual" id="breadcrumb">
+    <span class="breadcrumb__item breadcrumb__item--loading">Cargando…</span>
+  </nav>
+
+  <main class="browse-main" id="browse-main">
+    <div class="browse-loading" id="browse-loading" aria-live="polite">
+      <span class="spinner" aria-hidden="true"></span>
+      Cargando…
+    </div>
+    <div id="browse-empty" class="browse-empty" hidden>
+      <span class="browse-empty__icon" aria-hidden="true">📂</span>
+      <p>Esta carpeta está vacía.</p>
+    </div>
+    <div id="browse-error" class="browse-error" hidden role="alert"></div>
+
+    <!-- Cuadrícula de archivos -->
+    <div id="browse-grid" class="browse-grid" hidden></div>
+  </main>
+
+  <!-- Lightbox para imágenes -->
+  <div id="lightbox" class="lightbox" hidden aria-modal="true" role="dialog" aria-label="Vista de imagen">
+    <button class="lightbox__close" id="lb-close" aria-label="Cerrar">✕</button>
+    <button class="lightbox__nav lightbox__nav--prev" id="lb-prev" aria-label="Imagen anterior">‹</button>
+    <div class="lightbox__content">
+      <img id="lb-img" src="" alt="" class="lightbox__img" />
+      <p id="lb-caption" class="lightbox__caption"></p>
+    </div>
+    <button class="lightbox__nav lightbox__nav--next" id="lb-next" aria-label="Imagen siguiente">›</button>
+    <a id="lb-download" href="#" download class="lightbox__download btn btn--outline" aria-label="Descargar imagen">⬇ Descargar</a>
+  </div>
+
+  <script src="/browse.js"></script>
+</body>
+</html>
