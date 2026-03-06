@@ -4,6 +4,7 @@ require('dotenv').config();
 
 const crypto = require('crypto');
 const fs = require('fs');
+const os = require('os');
 const path = require('path');
 const express = require('express');
 const session = require('express-session');
@@ -22,6 +23,7 @@ const {
   FILEBROWSER_URL = 'http://127.0.0.1:8080',
   PORT = '3000',
   NODE_ENV = 'production',
+  DATA_ROOT,
 } = process.env;
 
 if (!SESSION_SECRET || SESSION_SECRET.length < 32) {
@@ -37,6 +39,37 @@ if (!PASSWORD_HASH) {
   );
   process.exit(1);
 }
+
+// ──────────────────────────────────────────────
+// Directorio raíz de datos a servir (DATA_ROOT)
+// ──────────────────────────────────────────────
+const DATA_ROOT_PATH = DATA_ROOT
+  ? path.resolve(DATA_ROOT)
+  : path.resolve(os.homedir());
+
+/**
+ * Resuelve una ruta relativa al DATA_ROOT de forma segura.
+ * Devuelve null si el resultado escapa del DATA_ROOT (path traversal).
+ * @param {string} userPath - Ruta relativa proporcionada por el usuario.
+ * @returns {string|null}
+ */
+function resolveDataPath(userPath) {
+  // Eliminar slashes iniciales para tratar siempre como ruta relativa a DATA_ROOT_PATH
+  const rel = (userPath || '').replace(/^[/\\]+/, '');
+  const normalized = path.resolve(DATA_ROOT_PATH, rel);
+  if (
+    normalized !== DATA_ROOT_PATH &&
+    !normalized.startsWith(DATA_ROOT_PATH + path.sep)
+  ) {
+    return null;
+  }
+  return normalized;
+}
+
+/** Extensiones de imagen para el explorador de fotos. */
+const IMAGE_EXTS = new Set([
+  '.jpg', '.jpeg', '.png', '.gif', '.webp', '.bmp', '.svg', '.avif', '.tiff', '.tif',
+]);
 
 // ──────────────────────────────────────────────
 // Plantillas HTML (cargadas una vez en memoria)
@@ -263,6 +296,100 @@ app.get('/api/status', requireAuth, (req, res) => {
       loggedInAt: req.session.loggedInAt || null,
     },
     timestamp: new Date().toISOString(),
+  });
+});
+
+// ──────────────────────────────────────────────
+// Explorador de archivos integrado
+// ──────────────────────────────────────────────
+
+// Página del explorador
+app.get('/browse', requireAuth, (req, res) => {
+  res.sendFile(path.join(__dirname, '..', 'public', 'browse.html'));
+});
+
+// API: listado de directorio
+app.get('/api/browse', requireAuth, (req, res) => {
+  const rel = typeof req.query.path === 'string'
+    ? decodeURIComponent(req.query.path)
+    : '';
+  const abs = resolveDataPath(rel);
+  if (!abs) {
+    return res.status(400).json({ error: 'Ruta inválida.' });
+  }
+
+  fs.stat(abs, (statErr, stat) => {
+    if (statErr || !stat.isDirectory()) {
+      return res.status(404).json({ error: 'Directorio no encontrado.' });
+    }
+
+    fs.readdir(abs, { withFileTypes: true }, (readErr, entries) => {
+      if (readErr) {
+        console.error('[ERROR] readdir:', readErr.message);
+        return res.status(500).json({ error: 'Error al leer el directorio.' });
+      }
+
+      const items = entries
+        .filter((e) => !e.name.startsWith('.')) // ocultar archivos ocultos
+        .map((entry) => {
+          const ext = path.extname(entry.name).toLowerCase();
+          const fullPath = path.join(abs, entry.name);
+          let size = null;
+          let modified = null;
+          try {
+            const s = fs.statSync(fullPath);
+            size = entry.isFile() ? s.size : null;
+            modified = s.mtime.toISOString();
+          } catch {
+            // ignorar entradas no legibles
+          }
+          return {
+            name: entry.name,
+            type: entry.isDirectory() ? 'directory' : 'file',
+            ext: entry.isFile() ? ext : null,
+            isImage: entry.isFile() && IMAGE_EXTS.has(ext),
+            size,
+            modified,
+          };
+        });
+
+      // Directorios primero, luego archivos; ambos ordenados alfabéticamente
+      items.sort((a, b) => {
+        if (a.type !== b.type) return a.type === 'directory' ? -1 : 1;
+        return a.name.localeCompare(b.name, 'es', { sensitivity: 'base' });
+      });
+
+      const relPath = path.relative(DATA_ROOT_PATH, abs);
+      res.json({
+        path: relPath === '' ? '/' : '/' + relPath.split(path.sep).join('/'),
+        entries: items,
+      });
+    });
+  });
+});
+
+// API: servir un archivo (inline o descarga)
+app.get('/raw', requireAuth, (req, res) => {
+  const rel = typeof req.query.path === 'string'
+    ? decodeURIComponent(req.query.path)
+    : '';
+  const abs = resolveDataPath(rel);
+  if (!abs) {
+    return res.status(400).send('Ruta inválida.');
+  }
+
+  fs.stat(abs, (err, stat) => {
+    if (err || !stat.isFile()) {
+      return res.status(404).send('Archivo no encontrado.');
+    }
+    const disposition = req.query.dl === '1' ? 'attachment' : 'inline';
+    const name = path.basename(abs);
+    res.setHeader(
+      'Content-Disposition',
+      `${disposition}; filename*=UTF-8''${encodeURIComponent(name)}`,
+    );
+    res.setHeader('Cache-Control', 'private, max-age=300');
+    res.sendFile(abs);
   });
 });
 
