@@ -2,6 +2,8 @@
 
 require('dotenv').config();
 
+const crypto = require('crypto');
+const fs = require('fs');
 const path = require('path');
 const express = require('express');
 const session = require('express-session');
@@ -37,6 +39,20 @@ if (!PASSWORD_HASH) {
 }
 
 // ──────────────────────────────────────────────
+// Plantilla de login (cargada una vez en memoria)
+// ──────────────────────────────────────────────
+const LOGIN_HTML_PATH = path.join(__dirname, '..', 'public', 'login.html');
+const LOGIN_HTML_TEMPLATE = fs.readFileSync(LOGIN_HTML_PATH, 'utf8');
+
+/** Inyecta el token CSRF en el formulario de login. */
+function renderLogin(csrfToken) {
+  return LOGIN_HTML_TEMPLATE.replace(
+    '</form>',
+    `  <input type="hidden" name="_csrf" value="${csrfToken}" />\n</form>`,
+  );
+}
+
+// ──────────────────────────────────────────────
 // Configuración de la aplicación Express
 // ──────────────────────────────────────────────
 const app = express();
@@ -62,7 +78,7 @@ app.use(
 app.use(express.urlencoded({ extended: false }));
 app.use(express.json());
 
-// Archivos estáticos públicos (login.html, styles.css)
+// Archivos estáticos públicos (styles.css, etc.)
 app.use(express.static(path.join(__dirname, '..', 'public')));
 
 // ──────────────────────────────────────────────
@@ -90,15 +106,25 @@ const sessionOptions = {
 app.use(session(sessionOptions));
 
 // ──────────────────────────────────────────────
-// Rate limiting en el endpoint de login
+// Rate limiting
 // ──────────────────────────────────────────────
-const loginLimiter = rateLimit({
+
+// Limiter estricto para POST /login (intentos fallidos)
+const loginPostLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // ventana de 15 minutos
   max: 10, // máximo 10 intentos por ventana
   standardHeaders: true,
   legacyHeaders: false,
   message: { error: 'Demasiados intentos. Espera 15 minutos.' },
   skipSuccessfulRequests: true,
+});
+
+// Limiter permisivo para GET /login (evita scraping / enumeración)
+const loginGetLimiter = rateLimit({
+  windowMs: 60 * 1000, // ventana de 1 minuto
+  max: 30, // máximo 30 peticiones por minuto
+  standardHeaders: true,
+  legacyHeaders: false,
 });
 
 // ──────────────────────────────────────────────
@@ -114,22 +140,51 @@ function requireAuth(req, res, next) {
 }
 
 // ──────────────────────────────────────────────
+// Middleware de validación CSRF (para POST /login)
+// ──────────────────────────────────────────────
+function verifyCsrf(req, res, next) {
+  const tokenFromSession = req.session.csrfToken;
+  const tokenFromBody = req.body._csrf;
+
+  const sessionBuf = tokenFromSession ? Buffer.from(tokenFromSession) : null;
+  const bodyBuf = tokenFromBody ? Buffer.from(tokenFromBody) : null;
+
+  const valid =
+    sessionBuf !== null &&
+    bodyBuf !== null &&
+    sessionBuf.length === bodyBuf.length &&
+    crypto.timingSafeEqual(sessionBuf, bodyBuf);
+
+  if (!valid) {
+    return res
+      .status(403)
+      .send(
+        'Token de seguridad inválido. <a href="/login">Recarga la página</a> e inténtalo de nuevo.',
+      );
+  }
+  next();
+}
+
+// ──────────────────────────────────────────────
 // Rutas públicas: página de login
 // ──────────────────────────────────────────────
-app.get('/login', (req, res) => {
+app.get('/login', loginGetLimiter, (req, res) => {
   if (req.session && req.session.authenticated) {
     return res.redirect('/files/');
   }
-  res.sendFile(path.join(__dirname, '..', 'public', 'login.html'));
+  // Generar o reutilizar token CSRF para esta sesión
+  if (!req.session.csrfToken) {
+    req.session.csrfToken = crypto.randomBytes(32).toString('hex');
+  }
+  res.setHeader('Content-Type', 'text/html; charset=utf-8');
+  res.send(renderLogin(req.session.csrfToken));
 });
 
-app.post('/login', loginLimiter, async (req, res) => {
+app.post('/login', loginPostLimiter, verifyCsrf, async (req, res) => {
   const { password } = req.body;
 
   if (!password || typeof password !== 'string') {
-    return res.status(400).sendFile(
-      path.join(__dirname, '..', 'public', 'login.html'),
-    );
+    return res.status(400).redirect('/login');
   }
 
   try {
@@ -148,11 +203,11 @@ app.post('/login', loginLimiter, async (req, res) => {
         res.redirect(returnTo);
       });
     } else {
+      // Invalidar el token CSRF tras un intento fallido (fuerza recarga del token)
+      delete req.session.csrfToken;
       // Respuesta con retardo leve para dificultar enumeración de tiempos
       setTimeout(() => {
-        res.status(401).sendFile(
-          path.join(__dirname, '..', 'public', 'login.html'),
-        );
+        res.status(401).redirect('/login');
       }, 400);
     }
   } catch (err) {
